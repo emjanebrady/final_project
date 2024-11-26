@@ -1,0 +1,199 @@
+---
+title: "Final Project"
+author: "Emma Brady"
+date: 11/25/2024
+format: 
+  html: 
+    code-overlap: wrap
+execute:
+  eval: true
+  echo: true
+---
+
+```{python}
+##import necessary packages
+import pandas as pd
+import altair as alt 
+from datetime import date
+import numpy as np
+import geopandas as gpd
+alt.data_transformers.disable_max_rows()
+import json
+
+base_path = r'C:\Users\emjan\OneDrive\Documents\GitHub\final_project'
+```
+
+```{python}
+##load in dataset
+recidivism_path = os.path.join(base_path, 'NIJ_s_Recidivism_Challenge_Full_Dataset_20241125.csv')
+recidivism_df = pd.read_csv(recidivism_path)
+```
+
+I'll start by exploring the dataset and seeing how many null values there are. To do this I will make a stacked bar chart of all the null values.
+```{python}
+#Make a new dataframe that contains the number of null values for each variable
+null_values = pd.DataFrame({
+  'variable': recidivism_df.columns,
+  'not null': recidivism_df.notnull().sum(),
+  'null': recidivism_df.isnull().sum()
+})
+```
+
+```{python}
+##make a stacked bar chart with null and not null values
+null_chart = alt.Chart(null_values).transform_fold(
+    fold=['not null', 'null'],
+    as_=['status', 'count']
+).mark_bar().encode(
+    x=alt.X('variable:N', title='Variable'),
+    y=alt.Y('count:Q', title='Count'),
+    color='status:N',
+    tooltip=['variable:N', 'status:N', 'count:Q']
+).properties(
+    title='Stacked Bar Chart of NULL and Not NULL Observations',
+)
+
+null_chart
+```
+From this bar chart we can see that approximately 1/5 of the data around drug tests is N/A, including 'Avg_Days_per_DrugTest', 'DrugTests_Cocaine_Positive', 'DrugTests_Meth_Positive', 'DrugTests_Other_Positive', and 'DrugTests_THC_Positive'. This is good to know moving forward with the data analysis. If I run any analysis with these variables, I will not include the NA variables.
+
+Now I want to see how education affects recidivism rates.
+
+```{python}
+stacked_bar = alt.Chart(recidivism_df).mark_bar().encode(
+    x=alt.X('Education_Level:N', title='Education Level'),
+    y=alt.Y('count()', title='Count'),
+    color=alt.Color('Recidivism_Arrest_Year1:N', title='Recidivism (Year 1)'),
+    tooltip=['Education_Level', 'Recidivism_Arrest_Year1', 'count()']
+).properties(
+    title='Recidivism by Education Level'
+)
+stacked_bar
+```
+
+```{python}
+normalized_bar = alt.Chart(recidivism_df).mark_bar().encode(
+    x=alt.X('Education_Level:N', title='Education Level'),
+    y=alt.Y('count()', stack='normalize', title='Recidivism Rate'),
+    color=alt.Color('Recidivism_Within_3years:N', title='Recidivism Rate'),
+    tooltip=['Education_Level', 'Recidivism_Within_3years', 'count()']
+).properties(
+    title='Recidivism Rate Within 3 Years By Education Level'
+)
+
+normalized_bar
+```
+
+```{python}
+stacked_bar = alt.Chart(recidivism_df).mark_bar().encode(
+    x=alt.X('Race:N', title='Race'),
+    y=alt.Y('count()', stack='normalize', title='Count'),
+    color=alt.Color('Education_Level:N', title='Education Level'),
+    tooltip=['Race', 'Education_Level', 'count()']
+).properties(
+    title='Breakdown of Education Level by Race',
+    width=600
+)
+stacked_bar
+```
+
+Now lets add a new dataset--one on juvenile delinquents and their education level
+```{python}
+##Load in the juvenile data
+juvenile_path = os.path.join(base_path, 'juvenile_data.tsv')
+juvenile_df = pd.read_csv(juvenile_path, sep='\t')
+```
+
+To make the dataset easier to work with, I will start by renaming the variable names to make them easier to work with in python and more clear what the variable is using the codebook.
+```{python}
+# Define a dictionary to map old column names to new names
+rename_columns = {
+    'DJJID': 'youth_id',
+    'ZCTA5': 'community_id',
+    'PACTNUMBER': 'c_pact_number',
+    'TAR_VOP': 'rearrest_within_1yr',
+    'TCN_VOP': 'readjudicated_within_1yr',
+    'TCP_VOP': 'incarcerated_within_1yr',
+    'TOTAL_DYNAMIC': 'total_dynamic_risk',
+    'RACE_ETHNICITY': 'race_ethnicity',
+    'YOUTHGENDER': 'youth_gender',
+    'AGEREL': 'age_at_release',
+    'AGEENRL': 'age_at_admission',
+    'AGE1ST': 'age_at_first_offense',
+    'FEL': 'prior_felonies',
+    'PFEL': 'prior_person_felonies',
+    'SEXFEL': 'prior_sexual_felonies',
+    'DETENTION': 'secure_detention_history',
+    'PLACEMENT': 'commitment_placement_history',
+    'SOCDISORG': 'social_disorganization_index',
+    'IMMICON': 'immigrant_concentration_index',
+    'C_SOCDISORG': 'centered_social_disorganization',
+    'C_IMMICON': 'centered_immigrant_concentration',
+    'ENROLLED': 'school_enrollment_status',
+    'DROPOUT': 'school_dropout_status',
+    'GRADUATE': 'school_graduation_status',
+    'CONDUCT': 'recent_school_conduct',
+    'ATTENDANCE': 'recent_school_attendance',
+    'GRADES': 'recent_academic_performance',
+    'FRIENDS': 'current_friends',
+    'FAMINCAR': 'family_incarceration_history',
+    'FAMPROBS': 'family_problem_history',
+    'OBEY': 'parental_authority_level',
+    'ALCOHOL': 'current_alcohol_use',
+    'DRUGS': 'current_drug_use',
+    'LAWABIDING': 'law_abiding_attitude',
+    'NORESPONSIBILITY': 'anti_social_responsibility_acceptance',
+    'V_AGGRESS': 'verbal_aggression_belief',
+    'P_AGGRESS': 'physical_aggression_belief',
+    'VIOPROB': 'violence_history',
+    'SEXPROB': 'sexual_aggression_history'
+}
+
+# Rename columns
+juvenile_df = juvenile_df.rename(columns=rename_columns)
+```
+Now let's take a look at how school enrollment affects recidivism.
+
+```{python}
+#make the charts easier to read by mapping the values before coding
+juvenile_df['school_enrollment_status'] = juvenile_df['school_enrollment_status'].map({1: 'Enrolled', 0: 'Not Enrolled'})
+
+juvenile_df['rearrest_within_1yr'] = juvenile_df['rearrest_within_1yr'].map({1: 'Yes', 0: 'No'})
+```
+
+```{python}
+juvenile_normalized_bar = alt.Chart(juvenile_df).mark_bar().encode(
+    x=alt.X('school_enrollment_status:O', title='School Enrollment Status'),
+    y=alt.Y('count()', stack='normalize', title='Proportion'),
+    color=alt.Color('rearrest_within_1yr:O', title='Rearrested within 1 Year'),
+    tooltip=[
+        alt.Tooltip('school_enrollment_status:O', title='School Enrollment Status'),
+        alt.Tooltip('rearrest_within_1yr:O', title='Rearrested within 1 Year'),
+        alt.Tooltip('count():Q', title='Count')
+    ]
+).properties(
+    title="Normalized Rearrest by School Enrollment Status",
+)
+
+juvenile_normalized_bar
+
+```
+
+
+```{python}
+
+```
+
+```{python}
+
+```
+
+```{python}
+
+```
+
+
+
+```{python}
+
+```
