@@ -17,6 +17,7 @@ import altair as alt
 from datetime import date
 import numpy as np
 import geopandas as gpd
+import matplotlib.pyplot as plt
 alt.data_transformers.disable_max_rows()
 import json
 
@@ -60,18 +61,6 @@ From this bar chart we can see that approximately 1/5 of the data around drug te
 Now I want to see how education affects recidivism rates.
 
 ```{python}
-stacked_bar = alt.Chart(recidivism_df).mark_bar().encode(
-    x=alt.X('Education_Level:N', title='Education Level'),
-    y=alt.Y('count()', title='Count'),
-    color=alt.Color('Recidivism_Arrest_Year1:N', title='Recidivism (Year 1)'),
-    tooltip=['Education_Level', 'Recidivism_Arrest_Year1', 'count()']
-).properties(
-    title='Recidivism by Education Level'
-)
-stacked_bar
-```
-
-```{python}
 normalized_bar = alt.Chart(recidivism_df).mark_bar().encode(
     x=alt.X('Education_Level:N', title='Education Level'),
     y=alt.Y('count()', stack='normalize', title='Recidivism Rate'),
@@ -83,6 +72,7 @@ normalized_bar = alt.Chart(recidivism_df).mark_bar().encode(
 
 normalized_bar
 ```
+From the normalized bar chart, we can see that there isn't a difference in the recidivism rate between those who have a high school diploma and those who don't. This indicates that we should explore those variables more, because it is strange for them to be equal.
 
 ```{python}
 stacked_bar = alt.Chart(recidivism_df).mark_bar().encode(
@@ -92,10 +82,10 @@ stacked_bar = alt.Chart(recidivism_df).mark_bar().encode(
     tooltip=['Race', 'Education_Level', 'count()']
 ).properties(
     title='Breakdown of Education Level by Race',
-    width=600
 )
 stacked_bar
 ```
+This graph is helpful in visualizing the difference in race and education. From this we can see that those who are Black have slighlty higher rates of not having a high school diploma than those who are White in prison.
 
 Now lets add a new dataset--one on juvenile delinquents and their education level
 ```{python}
@@ -156,44 +146,28 @@ Now let's take a look at how school enrollment affects recidivism.
 
 ```{python}
 #make the charts easier to read by mapping the values before coding
-juvenile_df['school_enrollment_status'] = juvenile_df['school_enrollment_status'].map({1: 'Enrolled', 0: 'Not Enrolled'})
+juvenile_df['school_enrollment_status'] = juvenile_df['school_enrollment_status'].map({1: '1 - Enrolled', 0: '0 - Not Enrolled'})
+
+juvenile_df['school_dropout_status'] = juvenile_df['school_dropout_status'].map({1: '1 - Yes', 0: '0 - No'})
+
+juvenile_df['school_graduation_status'] = juvenile_df['school_graduation_status'].map({1: '1 - Yes', 0:'0 - No'})
+
+juvenile_df['recent_school_conduct'] = juvenile_df['recent_school_conduct'].map({1: '1 - Has received recognition for good bhvr', 2:'2 - No probs in school conduct', 3:'3 - Probs reported by teachers', 4:'4 - Problem Calls to Parents', 5:'5 - Calls to Police'})
+
+juvenile_df['recent_school_attendance'] = juvenile_df['recent_school_attendance'].map({1: '1 - Good attendance with few absences', 2:'2 - No unexcused absences', 3:'3 - Some partial day unexcused absences', 4:'4 - Some full day unexcused absences', 5:'5 - Habitual truant'})
+
+juvenile_df['recent_academic_performance'] = juvenile_df['recent_academic_performance'].map({1: '1 - Mostly As', 2: '2 - Mostly As and Bs', 3: '3 - Mostly Bs and Cs', 4: '4 - Mostly Cs and Ds and some Fs', 5: '5 - Some Ds Mostly Fs'})
 
 juvenile_df['rearrest_within_1yr'] = juvenile_df['rearrest_within_1yr'].map({1: 'Yes', 0: 'No'})
+
+juvenile_df['readjudicated_within_1yr'] = juvenile_df['readjudicated_within_1yr'].map({1: 'Yes', 0:'No'})
+
+juvenile_df['incarcerated_within_1yr'] = juvenile_df
 ```
 
 ```{python}
-juvenile_normalized_bar = alt.Chart(juvenile_df).mark_bar().encode(
-    x=alt.X('school_enrollment_status:O', title='School Enrollment Status'),
-    y=alt.Y('count()', stack='normalize', title='Proportion'),
-    color=alt.Color('rearrest_within_1yr:O', title='Rearrested within 1 Year'),
-    tooltip=[
-        alt.Tooltip('school_enrollment_status:O', title='School Enrollment Status'),
-        alt.Tooltip('rearrest_within_1yr:O', title='Rearrested within 1 Year'),
-        alt.Tooltip('count():Q', title='Count')
-    ]
-).properties(
-    title="Normalized Rearrest by School Enrollment Status",
-)
-
-juvenile_normalized_bar
-
+#Save the data as a CSV file for input into the Shiny app
+juvenile_df.to_csv('juvenile_app/juvenile_data.csv', index=False)
 ```
 
-
-```{python}
-
-```
-
-```{python}
-
-```
-
-```{python}
-
-```
-
-
-
-```{python}
-
-```
+I'll furhter explore this data in the app.
