@@ -60,3 +60,5 @@ Overall, the recividism measure rearrested within 1 year has a stronger correlat
 # Future Research
 
 We can see from this preliminary look at this data that there does appear to be a connection between education and recidivism. Whether that is because education itself contributes to lower rates of recidivism or there is overlap in those who perform well in school and those with lower recidivism rates is unclear from the work I have done so far. Further research, including RCTs, will be needed to see how education affects recidivism. In the future research, researchers should also keep in mind how other demographics come into play, including race.
+
+It is also crucial for future research and policy design to account for a broad range of demographic factors. For instance, if Black individuals in prison have lower rates of high school diploma attainment compared to their White counterparts, prioritizing college programs over GED programs could inadvertently exclude those who need foundational education support.
