@@ -23,7 +23,7 @@ base_path = r'C:\Users\emjan\OneDrive\Documents\GitHub\final_project'
 
 ```{python}
 ##load in dataset
-recidivism_path = os.path.join(base_path, 'NIJ_s_Recidivism_Challenge_Full_Dataset_20241125.csv')
+recidivism_path = os.path.join(base_path, 'data/NIJ_s_Recidivism_Challenge_Full_Dataset_20241125.csv')
 recidivism_df = pd.read_csv(recidivism_path)
 ```
 
@@ -54,7 +54,7 @@ null_chart = alt.Chart(null_values).transform_fold(
 null_chart
 
 # Save as PNG
-null_chart.save('null_chart.png')
+null_chart.save('pictures/null_chart.png')
 ```
 From this bar chart we can see that approximately 1/5 of the data around drug tests is N/A, including 'Avg_Days_per_DrugTest', 'DrugTests_Cocaine_Positive', 'DrugTests_Meth_Positive', 'DrugTests_Other_Positive', and 'DrugTests_THC_Positive'. This is good to know moving forward with the data analysis. If I run any analysis with these variables, I will not include the NA variables.
 
@@ -64,16 +64,18 @@ Now I want to see how education affects recidivism rates.
 education_level_bar = alt.Chart(recidivism_df).mark_bar().encode(
     x=alt.X('Education_Level:N', title='Education Level'),
     y=alt.Y('count()', stack='normalize', title='Recidivism Rate'),
-    color=alt.Color('Recidivism_Within_3years:N', title='Recidivism Rate'),
+    color=alt.Color('Recidivism_Within_3years:N', title='Reentered Prison within 3 Years'),
     tooltip=['Education_Level', 'Recidivism_Within_3years', 'count()']
 ).properties(
-    title='Recidivism Rate Within 3 Years By Education Level'
+    title='Recidivism Rate Within 3 Years By Education Level',
+    width=500,
+    height=300
 )
 
 education_level_bar
 
 # Save as PNG
-education_level_bar.save('education_level_bar.png')
+education_level_bar.save('pictures/education_level_bar.png')
 ```
 From the normalized bar chart, we can see that there isn't a difference in the recidivism rate between those who have a high school diploma and those who don't. This indicates that we should explore those variables more, because it is strange for them to be equal.
 
@@ -85,18 +87,20 @@ race_bar = alt.Chart(recidivism_df).mark_bar().encode(
     tooltip=['Race', 'Education_Level', 'count()']
 ).properties(
     title='Breakdown of Education Level by Race',
+    width=400,
+    height=300
 )
 race_bar
 
 # Save as PNG
-race_bar.save('race_bar.png')
+race_bar.save('pictures/race_bar.png')
 ```
 This graph is helpful in visualizing the difference in race and education. From this we can see that those who are Black have slighlty higher rates of not having a high school diploma than those who are White in prison.
 
 Now lets add a new dataset--one on juvenile delinquents and their education level
 ```{python}
 ##Load in the juvenile data
-juvenile_path = os.path.join(base_path, 'juvenile_data.tsv')
+juvenile_path = os.path.join(base_path, 'data/juvenile_data.tsv')
 juvenile_df = pd.read_csv(juvenile_path, sep='\t')
 ```
 
@@ -173,7 +177,13 @@ juvenile_df['incarcerated_within_1yr'] = juvenile_df['incarcerated_within_1yr'].
 
 ```{python}
 #Save the data as a CSV file for input into the Shiny app
-juvenile_df.to_csv('juvenile_app/juvenile_data.csv', index=False)
+juvenile_df.to_csv('shiny-app/juvenile_data.csv', index=False)
 ```
 
 I'll further explore this data in the app.
+
+
+```{python}
+print(juvenile_df)
+
+```
